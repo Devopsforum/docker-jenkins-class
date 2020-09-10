@@ -11,7 +11,7 @@ services:
       - net
   remote_host:
     container_name: remote_host
-    image: remotez-host
+    image: remote-host
     build:
       context: centos
     networks:
