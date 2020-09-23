@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# Get Branch name from ref head
+
+if ! [-t 0 ]; then
+  read -a ref
+fi
+IFS='/' read -ra REF <<< "${ref[2]}"
+branch ="${REF[2]}"
+
+if [$branch == "master" ]; then
+crumb=$(curl -u "trigger:1234" -s 'http://<IP>:8080/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,":",//crumb)')
+curl -u "trigger:1234" -H "$crumb" -X POST http://<IP>:8080/job/<job-name-to-trigger>/build?delay=0sec
+
+  if [$? -eq 0 ] ; then
+     echo "**** OK ***"
+  else
+     echo "**** ERROR ***"
+  fi
+fi
