@@ -1,0 +1,90 @@
+#Pull the maven image
+docker pull maven:3-alpine
+
+#to execute the maven commands -w will take to the app location where we have pom.xml to run the mvn commands
+# -v for mounting the volumes in the container
+docker run --rm -ti -v $PWD/java-app:/app -v /root/.m2/ -w /app maven:3-alpine sh
+
+#above command will take us to go into the maven container to execute the maven commands.
+
+# this below command will help us not to go into the maven container for executing the maven commands instead we can run outside the maven container 
+docker run --rm -v $PWD/java-app:/app -v /root/.m2/:/root/.m2/ -w /app maven:3-alpine mvn -B -DskipTests clean package
+
+
+## Script to execute the above maven command
+#!/bin/bash
+
+echo "*************************"
+echo "*****Building Jar********"
+echo "*************************"
+
+docker run --rm -v $PWD/java-app:/app -v /root/.m2/:/root/.m2/ -w /app maven:3-alpine "$@"
+
+## command to run the above script (note-we need to be in the location where pom.xml presents
+./<script-name>.sh mvn -B- DskipTests clean package ---> this command will create the package
+
+##Dockerfile creation for installing the JRE 
+FROM openjdk:8-jre-alpine
+
+
+RUN mkdir /app
+
+COPY *.jar /app/app.jar
+
+CMD java -jar /app/app.jar
+
+##To execute the above docker file use the below command
+docker build -f <DOCKER-FileName> -t <tagName>
+
+## to check whether the above dockerfile execution is success go into the container and check for the app.jar location using the below command
+docker --rm -ti <tagName> sh
+
+## once validation done, you execute the below command to check if the JAR is working fine or not using the below command
+docker run -d <tagName>
+docker logs -f <image-name that you got after executing the above command>
+
+## Docker compose file to create the image based on the Docker file created above 
+version: '3'
+services:
+  app:
+    image: "app:$BUILD_TAG"
+    build:
+      context: .
+      dockerfile: Dockerfile-java
+##Save the above code as docker compose file by naming it with the .yml extension for compose files and to run the docker compose please use the below command
+docker-compose -f <name-of-dockercomposefile-thats-created-above>.yml build
+
+## Automate the above steps using the below commands by drafting in a file called <Name>.sh
+#!/bin/bash
+
+# Copy the new jar to the build location
+cp -f java-app/target/*.jar jenkins/build/
+
+echo "********************************"
+echo "*************Build the jar******"
+echo "********************************"
+
+cd jenkins/build/ && docker-compose -f docker-compose-java.yml build --no-cache
+
+#Save and execute the above script by comming to the pom.xml location
+
+## to test thebuild process using the maven test command using the below command
+docker run --rm -v $PWD/java-app:/app -v /root/.m2/:/root/.m2/ -w /app maven:3-alpine mvn test  --> this is the line of code that we used in the above for building the jar
+
+## to automate the above step you need to create the script like below 
+mkdir jenkins/test
+vi mvn.sh --> in this mvn.sh file paste the below code 
+#!/bin/bash
+
+echo "*************************"
+echo "*****Testing the code****"
+echo "*************************"
+
+docker run --rm -v $PWD/java-app:/app -v /root/.m2/:/root/.m2/ -w /app maven:3-alpine "$@"
+## to execute the above lines ode you need to execute the below command
+./jenkins/test/mvn.sh mvn test --> this will create the testing reports under the surefire location 
+
+## to push the images to the docker hub follow the commands below
+docker login --> give the credentials 
+docker tag <Name-of-the-image-that-you-want-push>:<tagName> <name-of-the-repository-that-created-in-the-docker-hub>:<tagName>
+docker push <name-of-the-repository-that-created-in-the-docker-hub>:<tagName>
