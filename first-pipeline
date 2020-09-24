@@ -1,0 +1,127 @@
+#Simple Pipeline code
+pipeline{
+    agent any
+
+    stages {
+        stage('Build') {
+           steps {
+                echo 'Inside Building stage....'
+                }
+             }
+        stage('Test') {
+           steps {
+                echo 'Inside testing stage....'
+                }
+             }
+        stage('Deploy') {
+           steps {
+                echo 'Inside deploying stage...'
+                }
+             }
+        }
+}
+
+#Multiple steps pipeline sample
+pipeline {
+    agent any
+    stages {
+        stage('Build') {
+            steps {
+                sh 'echo "My first multiple steps pipe script"'
+                sh '''
+                    echo "Doing more steps"
+                    ls -la
+                '''
+                }
+           }
+        }
+}
+
+#Retry pipeline sample
+pipeline {
+    agent any
+    stages{
+        stage('Timeout') {
+            steps {
+                retry(3){
+                    sh 'I am going to work :c"
+                    }
+                 }
+              } 
+        }          
+}
+
+#Timeout sample pipeline code
+pipeline {
+    agent any
+    stages{
+        stage('Timeout') {
+            steps {
+                retry(3){
+                    sh 'echo hello'
+                    }
+                timeout(time: 3, unit:'SECONDS') {
+                    sh 'sleep 5'
+                    }
+                 }
+              } 
+        }          
+}
+
+#Sample for declaring the environment variables in the pipeline
+pipeline {
+    agent any 
+    
+    environment {
+        FIRSTNAME = 'Yeluri'
+        LASTNAME = 'Venkat'
+     }
+     stages {
+        stage('Build') {
+            steps {
+                sh 'echo $FIRSTNAME $LASTNAME'
+                }
+            }
+        }    
+}
+
+#Simple pipeline code for setting the credentials in jenkins
+pipeline {
+    agent any 
+    environment {
+        secret = credentials('TEST')
+    }
+    stages {
+        stage('Example stage 1') {
+            steps {
+                sh 'echo $secret'
+            }
+       }   
+  }    
+}         
+
+#Sample to update the post actions stesps
+pipeline {
+    agent any
+    stages {
+        stage('Test') {
+            steps {
+                sh 'echo "FAIL!"; exit 1'
+            }
+         }
+     }
+     post {
+        always {
+            echo 'I Will get executed :D'
+        }
+        success {
+            echo 'I will only get executed if this is success'
+        }
+        failure {
+            echo 'I will only get executed if this fails'
+        }
+        unstable {
+            echo 'I will only get executed if this is unstable'
+        }
+   }
+}
