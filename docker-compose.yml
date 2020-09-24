@@ -27,3 +27,40 @@ services:
        - net
 networks:
   net:
+
+
+##the below docker-compose.yml code is meant for installing the Docker inside jenkins container
+version: '3'
+services:
+  jenkins:
+    container_name: jenkins
+    image: jenkins/docker
+    build:
+      context: pipeline
+    ports:
+      - "8080:8080"
+    volumes:
+      - "$PWD/jenkins_home:/var/jenkins_home"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    networks:
+      - net
+  remote_host:
+    container_name: remote_host
+    image: remote_host
+    build:
+      context: centos
+    volumes:
+      - "$PWD/aws-s3.sh:/tmp/script.sh"
+    networks:
+      - net
+  db_host:
+    container_name: db
+    image: mysql:5.7
+    environment:
+      - "MYSQL_ROOT_PASSWORD=1143"
+    volumes:
+      - "$PWD/db_data:/var/lib/mysql"
+    networks:
+      - net
+networks:
+   net:
