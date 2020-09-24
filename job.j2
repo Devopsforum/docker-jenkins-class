@@ -1,0 +1,24 @@
+job('job_dsl_created'){
+	description('this is to update the description of the job created')
+	
+	parameters{
+	    stringParam('Planet', defaultValue = 'world', description = 'this is the world')
+	    booleanParam('FLAG', true)
+	    choiceParam('OPTION', ['option 1 (default)', 'option 2', 'option 4'])
+	}
+	scm{
+	    git('https://github.com/Devopsforum/jenkins-git-maven-test.git', 'master')
+	}
+	triggers{
+	    cron('H 5 * * 7')
+	}
+	steps{
+	  shell("""echo 'Hello World'
+		   echo 'How are you'
+		"""
+	)
+	publishers{
+	     mailer('yvs@devopsforum.com', true, true)
+	}
+     } 
+}
